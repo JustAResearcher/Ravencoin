@@ -33,7 +33,6 @@ RUN apt-get update && \
 	libzmq3-dev libminiupnpc-dev libdb4.8-dev libdb4.8++-dev && \
 	apt-get clean
 
-
 #Build Meowcoin from source
 COPY . /home/meowcoin/build/Meowcoin/
 WORKDIR /home/meowcoin/build/Meowcoin
@@ -41,20 +40,8 @@ RUN ./autogen.sh && ./configure --disable-tests --with-gui=no && make
 
 FROM base AS final
 
-#Add our service account user
-RUN useradd -ms /bin/bash meowcoin && \
-	mkdir /var/lib/meowcoin && \
-	chown meowcoin:meowcoin /var/lib/meowcoin && \
-	ln -s /var/lib/meowcoin /home/meowcoin/.meowcoin && \
-	chown -h meowcoin:meowcoin /home/meowcoin/.meowcoin
-
-VOLUME /var/lib/meowcoin
-
 #Copy the compiled binaries from the build
 COPY --from=build /home/meowcoin/build/Meowcoin/src/meowcoind /usr/local/bin/meowcoind
 COPY --from=build /home/meowcoin/build/Meowcoin/src/meowcoin-cli /usr/local/bin/meowcoin-cli
 
-WORKDIR /home/meowcoin
-USER meowcoin
-
-CMD /usr/local/bin/meowcoind -datadir=/var/lib/meowcoin -printtoconsole -onlynet=ipv4
+ENTRYPOINT ["meowcoind", "-printtoconsole", "-onlynet=ipv4"]
